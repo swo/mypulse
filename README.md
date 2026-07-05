@@ -50,7 +50,10 @@ pnpm build             # typecheck + production build to dist/
 pnpm build-stations    # regenerate src/data/stations.json from GTFS static (needs .env.local)
 pnpm check-stations    # verify stations.json still matches the live feed, no write (what CI runs)
 pnpm list-stations      # print every official GTFS station name
+pnpm verify             # headless-browser smoke test: loads the app, prints it, fails on console errors
 ```
+
+`verify` needs a browser binary once per machine: `pnpm exec playwright install chromium`.
 
 ## Deploying
 
