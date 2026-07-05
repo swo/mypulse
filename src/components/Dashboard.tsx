@@ -3,7 +3,7 @@ import { usePredictions } from "../hooks/usePredictions";
 import { StationPanel } from "./StationPanel";
 import type { StationData } from "../types";
 
-const typedStationData = stationData as StationData;
+const typedStationData = stationData as unknown as StationData;
 
 export function Dashboard() {
   const { arrivalsByPlatform, error, lastUpdated } = usePredictions();
@@ -21,7 +21,6 @@ export function Dashboard() {
           station={station}
           arrivalsByPlatform={arrivalsByPlatform}
           lines={typedStationData.lines}
-          directions={typedStationData.directions}
         />
       ))}
     </main>

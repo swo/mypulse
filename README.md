@@ -15,12 +15,21 @@ Everything runs in the browser — no backend — and is designed to be hosted o
   `pnpm build-stations` rather than silently patched in the background. This is expected to be rare.
 - **What to watch**: edit `src/queries/queries.json` — an array of `{ "stationName": "...", "direction": "..." }`
   entries. `stationName` must exactly match a station name in WMATA's GTFS static `stops.txt` (run
-  `pnpm list-stations` to print every official name). `direction` is optional and filters to arrivals
-  terminating there — e.g. `"Greenbelt"` or `"Branch Av"` for the Green Line. It's matched against each
-  live trip's actual route + direction (via a small lookup built from `trips.txt`), not the platform,
-  since some stations (e.g. Columbia Heights) use a single shared platform for both directions. Run
-  `pnpm build-stations` after editing to resolve it into `src/data/stations.json`. Both a bad station
-  name and a bad direction string cause a non-zero exit listing what didn't match, so typos aren't silent.
+  `pnpm list-stations` to print every official name).
+
+  `direction` is optional and filters to arrivals heading toward a given terminus — e.g. `"Greenbelt"`.
+  It resolves (via `trips.txt`) to the full set of `(route, direction_id)` pairs that ever end there,
+  rather than to a single label, because several lines have short-turn or rush-hour-extension trips
+  that give the *same* route+direction more than one real terminus — e.g. Yellow Line trains signed
+  "direction 0" normally end at Mt Vernon Sq, but rush-hour ones continue to Greenbelt. It also can't
+  rely on platform IDs alone: some stations (e.g. Columbia Heights) use one shared platform for both
+  directions. `direction` can be a single string or an array of strings, for a shared trunk served by
+  lines with different termini in the same physical direction (e.g. Green ends at "Branch Av" and
+  Yellow at "Huntington" heading the same way south) — list both, or you'll silently drop one line's
+  trains, exactly as happened when this was first built with only `"Branch Av"`.
+
+  Run `pnpm build-stations` after editing to resolve it into `src/data/stations.json`. A bad station
+  name or a direction term that matches no trip anywhere causes a non-zero exit, so typos aren't silent.
 
 ## API key
 

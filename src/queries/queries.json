@@ -1,4 +1,4 @@
 [
   { "stationName": "Columbia Heights", "direction": "Greenbelt" },
-  { "stationName": "Hyattsville Crossing", "direction": "Branch Av" }
+  { "stationName": "Hyattsville Crossing", "direction": ["Branch Av", "Huntington"] }
 ]

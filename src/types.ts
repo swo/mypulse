@@ -1,10 +1,16 @@
 export type LineInfo = { name: string; color: string };
 
-export type Station = { name: string; platformIds: string[]; direction?: string };
+export type Platform = { stopId: string; description: string };
+
+export type Station = {
+  name: string;
+  platforms: Platform[];
+  direction?: string | string[];
+  directionFilter?: [routeId: string, directionId: number][];
+};
 
 export type StationData = {
   lines: Record<string, LineInfo>;
-  directions: Record<string, string>; // `${routeId}:${directionId}` -> terminus name
   stations: Station[];
 };
 

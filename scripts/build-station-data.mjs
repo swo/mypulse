@@ -8,11 +8,15 @@
 //                               instead of being silently auto-committed.
 //
 // If a query's stationName or direction doesn't match anything, this exits non-zero
-// in both modes — use `pnpm list-stations` to find the correct station name. Direction
-// filtering can't rely on platform IDs alone: some stations (e.g. Columbia Heights) use
-// a single shared platform for both directions, so the only reliable signal is each live
-// trip's route_id + direction_id. `directions` maps those to a terminus name (from
-// trips.txt) so the app can filter/group live predictions by it at runtime.
+// in both modes — use `pnpm list-stations` to find the correct station name.
+//
+// Direction filtering resolves to a set of (route_id, direction_id) pairs, not a single
+// headsign: several lines (Red, Orange, Silver, Yellow) have short-turn or rush-hour-
+// extension trips that give the *same* route+direction more than one real terminus (e.g.
+// Yellow Line direction 0 normally ends at "Mt Vernon Sq" but rush-hour trips continue to
+// "Greenbelt"). Picking just one headsign per pair would silently misfilter the other.
+// It also can't rely on platform IDs alone: some stations (e.g. Columbia Heights) use a
+// single shared platform for both directions.
 
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -33,19 +37,20 @@ function buildLines(routes) {
   return lines;
 }
 
-// One representative headsign per (route_id, direction_id) — consistent across all
-// trips of that route/direction per the GTFS spec.
-function buildDirections(trips) {
-  const directions = {};
+// Every (route_id, direction_id) pair that has at least one trip terminating somewhere
+// matching `text` (case-insensitive substring of trip_headsign).
+function findDirectionPairs(trips, text) {
+  const pairs = new Map();
+  const needle = text.trim().toLowerCase();
   for (const trip of trips) {
-    const key = `${trip.route_id}:${trip.direction_id}`;
-    if (!(key in directions)) directions[key] = trip.trip_headsign;
+    if (trip.trip_headsign?.toLowerCase().includes(needle)) {
+      pairs.set(`${trip.route_id}:${trip.direction_id}`, [trip.route_id, Number(trip.direction_id)]);
+    }
   }
-  return directions;
+  return [...pairs.values()];
 }
 
-function buildStations(queries, stops, directions) {
-  const headsigns = Object.values(directions);
+function buildStations(queries, stops, trips) {
   const stations = [];
   const unresolved = [];
 
@@ -57,16 +62,30 @@ function buildStations(queries, stops, directions) {
       unresolved.push(`No station found matching "${query.stationName}"`);
       continue;
     }
-    if (query.direction && !headsigns.some((h) => h.toLowerCase().includes(query.direction.trim().toLowerCase()))) {
-      unresolved.push(`No direction matching "${query.direction}" for "${query.stationName}"`);
-      continue;
+
+    let directionFilter;
+    if (query.direction) {
+      const terms = Array.isArray(query.direction) ? query.direction : [query.direction];
+      const pairs = new Map();
+      let allTermsMatched = true;
+      for (const term of terms) {
+        const found = findDirectionPairs(trips, term);
+        if (found.length === 0) {
+          unresolved.push(`No direction matching "${term}" for "${query.stationName}"`);
+          allTermsMatched = false;
+          continue;
+        }
+        found.forEach(([routeId, directionId]) => pairs.set(`${routeId}:${directionId}`, [routeId, directionId]));
+      }
+      if (!allTermsMatched) continue;
+      directionFilter = [...pairs.values()];
     }
 
     const parentIds = new Set(parents.map((p) => p.stop_id));
-    const platformIds = stops
+    const platforms = stops
       .filter((s) => s.location_type === "0" && parentIds.has(s.parent_station))
-      .map((s) => s.stop_id);
-    stations.push({ name: query.stationName, platformIds, direction: query.direction });
+      .map((s) => ({ stopId: s.stop_id, description: s.stop_desc }));
+    stations.push({ name: query.stationName, platforms, direction: query.direction, directionFilter });
   }
   return { stations, unresolved };
 }
@@ -74,8 +93,7 @@ function buildStations(queries, stops, directions) {
 async function main() {
   const queries = JSON.parse(readFileSync(queriesPath, "utf-8"));
   const { stops, routes, trips } = await fetchStaticGtfs(requireApiKey());
-  const directions = buildDirections(trips);
-  const { stations, unresolved } = buildStations(queries, stops, directions);
+  const { stations, unresolved } = buildStations(queries, stops, trips);
 
   if (unresolved.length > 0) {
     unresolved.forEach((message) => console.error(message));
@@ -84,7 +102,7 @@ async function main() {
     return;
   }
 
-  const next = { lines: buildLines(routes), directions, stations };
+  const next = { lines: buildLines(routes), stations };
   const current = existsSync(outputPath) ? JSON.parse(readFileSync(outputPath, "utf-8")) : null;
   const upToDate = current != null && JSON.stringify(current) === JSON.stringify(next);
 
