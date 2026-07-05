@@ -19,6 +19,7 @@ export async function fetchStaticGtfs(apiKey) {
   return {
     stops: parseCsv(readEntry("stops.txt")),
     routes: parseCsv(readEntry("routes.txt")),
+    trips: parseCsv(readEntry("trips.txt")),
   };
 }
 

@@ -7,8 +7,12 @@
 //                               (e.g. WMATA renaming/removing a station) fails loudly
 //                               instead of being silently auto-committed.
 //
-// If a query's stationName doesn't match anything, this exits non-zero in both modes —
-// use `pnpm list-stations <search>` to find the correct GTFS name.
+// If a query's stationName or direction doesn't match anything, this exits non-zero
+// in both modes — use `pnpm list-stations` to find the correct station name. Direction
+// filtering can't rely on platform IDs alone: some stations (e.g. Columbia Heights) use
+// a single shared platform for both directions, so the only reliable signal is each live
+// trip's route_id + direction_id. `directions` maps those to a terminus name (from
+// trips.txt) so the app can filter/group live predictions by it at runtime.
 
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -29,41 +33,58 @@ function buildLines(routes) {
   return lines;
 }
 
-function buildStations(queries, stops) {
-  const stations = {};
+// One representative headsign per (route_id, direction_id) — consistent across all
+// trips of that route/direction per the GTFS spec.
+function buildDirections(trips) {
+  const directions = {};
+  for (const trip of trips) {
+    const key = `${trip.route_id}:${trip.direction_id}`;
+    if (!(key in directions)) directions[key] = trip.trip_headsign;
+  }
+  return directions;
+}
+
+function buildStations(queries, stops, directions) {
+  const headsigns = Object.values(directions);
+  const stations = [];
   const unresolved = [];
+
   for (const query of queries) {
     const parents = stops.filter(
       (s) => s.location_type === "1" && s.stop_name.trim().toLowerCase() === query.stationName.trim().toLowerCase(),
     );
     if (parents.length === 0) {
-      unresolved.push(query);
+      unresolved.push(`No station found matching "${query.stationName}"`);
       continue;
     }
+    if (query.direction && !headsigns.some((h) => h.toLowerCase().includes(query.direction.trim().toLowerCase()))) {
+      unresolved.push(`No direction matching "${query.direction}" for "${query.stationName}"`);
+      continue;
+    }
+
     const parentIds = new Set(parents.map((p) => p.stop_id));
-    const platforms = stops
+    const platformIds = stops
       .filter((s) => s.location_type === "0" && parentIds.has(s.parent_station))
-      .map((s) => ({ stopId: s.stop_id, description: s.stop_desc }));
-    stations[query.id] = { name: query.label ?? query.stationName, platforms };
+      .map((s) => s.stop_id);
+    stations.push({ name: query.stationName, platformIds, direction: query.direction });
   }
   return { stations, unresolved };
 }
 
 async function main() {
   const queries = JSON.parse(readFileSync(queriesPath, "utf-8"));
-  const { stops, routes } = await fetchStaticGtfs(requireApiKey());
-  const { stations, unresolved } = buildStations(queries, stops);
+  const { stops, routes, trips } = await fetchStaticGtfs(requireApiKey());
+  const directions = buildDirections(trips);
+  const { stations, unresolved } = buildStations(queries, stops, directions);
 
   if (unresolved.length > 0) {
-    for (const query of unresolved) {
-      console.error(`No station found matching "${query.stationName}" (query id: ${query.id})`);
-    }
-    console.error("Run `pnpm list-stations <search>` to find the correct GTFS station name.");
+    unresolved.forEach((message) => console.error(message));
+    console.error("Run `pnpm list-stations` to find the correct GTFS station name.");
     process.exitCode = 1;
     return;
   }
 
-  const next = { lines: buildLines(routes), stations };
+  const next = { lines: buildLines(routes), directions, stations };
   const current = existsSync(outputPath) ? JSON.parse(readFileSync(outputPath, "utf-8")) : null;
   const upToDate = current != null && JSON.stringify(current) === JSON.stringify(next);
 

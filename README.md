@@ -13,11 +13,14 @@ Everything runs in the browser — no backend — and is designed to be hosted o
   re-checks this against the live feed on every merge to main and **fails the workflow** (no auto-commit)
   if it's drifted — e.g. WMATA renamed/removed a station or platform — so it gets fixed deliberately with
   `pnpm build-stations` rather than silently patched in the background. This is expected to be rare.
-- **What to watch**: edit `src/queries/queries.json` — add `{ "id": "...", "label": "...", "stationName": "..." }`
-  entries, where `stationName` must exactly match a station name in WMATA's GTFS static `stops.txt`.
-  Run `pnpm list-stations` to print every official station name, then `pnpm build-stations` to
-  resolve it into `src/data/stations.json`.
-  `build-stations` exits non-zero and lists any query it couldn't resolve, so a typo won't fail silently.
+- **What to watch**: edit `src/queries/queries.json` — an array of `{ "stationName": "...", "direction": "..." }`
+  entries. `stationName` must exactly match a station name in WMATA's GTFS static `stops.txt` (run
+  `pnpm list-stations` to print every official name). `direction` is optional and filters to arrivals
+  terminating there — e.g. `"Greenbelt"` or `"Branch Av"` for the Green Line. It's matched against each
+  live trip's actual route + direction (via a small lookup built from `trips.txt`), not the platform,
+  since some stations (e.g. Columbia Heights) use a single shared platform for both directions. Run
+  `pnpm build-stations` after editing to resolve it into `src/data/stations.json`. Both a bad station
+  name and a bad direction string cause a non-zero exit listing what didn't match, so typos aren't silent.
 
 ## API key
 

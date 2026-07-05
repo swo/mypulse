@@ -25,40 +25,35 @@
       "color": "919D9D"
     }
   },
-  "stations": {
-    "metro-center": {
-      "name": "Metro Center",
-      "platforms": [
-        {
-          "stopId": "PF_C01_C",
-          "description": "Blue/Orange/Silver Line to Downtown Largo/New Carrollton | to Franconia-Springfield/Vienna/Ashburn"
-        },
-        {
-          "stopId": "PF_A01_2",
-          "description": "Red Line to Shady Grove"
-        },
-        {
-          "stopId": "PF_A01_1",
-          "description": "Red Line to Glenmont"
-        }
-      ]
+  "directions": {
+    "RED:0": "Glenmont",
+    "RED:1": "Shady Grove",
+    "BLUE:1": "Franconia-Springfield",
+    "BLUE:0": "Largo",
+    "GREEN:0": "Greenbelt",
+    "GREEN:1": "Branch Av",
+    "YELLOW:0": "Mt Vernon Sq",
+    "YELLOW:1": "Huntington",
+    "ORANGE:1": "Vienna",
+    "ORANGE:0": "New Carrollton",
+    "SILVER:1": "Ashburn",
+    "SILVER:0": "New Carrollton"
+  },
+  "stations": [
+    {
+      "name": "Columbia Heights",
+      "platformIds": [
+        "PF_E04_C"
+      ],
+      "direction": "Greenbelt"
     },
-    "gallery-pl": {
-      "name": "Gallery Pl-Chinatown",
-      "platforms": [
-        {
-          "stopId": "PF_F01_C",
-          "description": "Green/Yellow Line to Greenbelt/Fort Totten | to Branch Ave/Huntington"
-        },
-        {
-          "stopId": "PF_B01_2",
-          "description": "Red Line to Shady Grove"
-        },
-        {
-          "stopId": "PF_B01_1",
-          "description": "Red Line to Glenmont"
-        }
-      ]
+    {
+      "name": "Hyattsville Crossing",
+      "platformIds": [
+        "PF_E08_2",
+        "PF_E08_1"
+      ],
+      "direction": "Branch Av"
     }
-  }
+  ]
 }

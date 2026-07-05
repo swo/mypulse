@@ -1,10 +1,8 @@
-import queries from "../queries/queries.json";
 import stationData from "../data/stations.json";
 import { usePredictions } from "../hooks/usePredictions";
 import { StationPanel } from "./StationPanel";
-import type { Query, StationData } from "../types";
+import type { StationData } from "../types";
 
-const typedQueries = queries as Query[];
 const typedStationData = stationData as StationData;
 
 export function Dashboard() {
@@ -17,18 +15,15 @@ export function Dashboard() {
         {lastUpdated && <p className="updated-at">updated {lastUpdated.toLocaleTimeString()}</p>}
         {error && <p className="error">{error.message}</p>}
       </header>
-      {typedQueries.map((query) => {
-        const station = typedStationData.stations[query.id];
-        if (!station) return null;
-        return (
-          <StationPanel
-            key={query.id}
-            station={station}
-            arrivalsByPlatform={arrivalsByPlatform}
-            lines={typedStationData.lines}
-          />
-        );
-      })}
+      {typedStationData.stations.map((station) => (
+        <StationPanel
+          key={station.name}
+          station={station}
+          arrivalsByPlatform={arrivalsByPlatform}
+          lines={typedStationData.lines}
+          directions={typedStationData.directions}
+        />
+      ))}
     </main>
   );
 }
