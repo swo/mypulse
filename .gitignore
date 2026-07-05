@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env.local
+.env.*.local
+*.tsbuildinfo
+
+# Python exploration files
+.venv/
+__pycache__/
+*.pyc

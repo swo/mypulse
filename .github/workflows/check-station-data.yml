@@ -1,0 +1,26 @@
+name: Check station data
+
+# Verifies src/data/stations.json still matches WMATA's live GTFS static feed.
+# Runs on every merge to main rather than on a schedule: if WMATA renames or
+# removes a station/platform, this fails loudly so it gets noticed and fixed
+# with `pnpm build-stations`, rather than silently auto-committing a change.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: node scripts/build-station-data.mjs --check
+        env:
+          VITE_WMATA_API_KEY: ${{ secrets.WMATA_API_KEY }}
