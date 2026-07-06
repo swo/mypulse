@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import stationData from "../data/stations.json";
-import { usePredictions } from "../hooks/usePredictions";
+import stationData from "../stations.json";
+import { usePredictions } from "../usePredictions";
 import { StationPanel } from "./StationPanel";
 import type { StationData } from "../types";
 

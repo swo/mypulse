@@ -37,24 +37,26 @@ export function StationPanel({
   arrivalsByPlatform: Map<string, Arrival[]>;
   lines: Record<string, LineInfo>;
 }) {
-  if (station.directionFilter) {
-    const arrivals = station.platforms
+  const { name, platforms, directionFilter, directionLabel } = station;
+
+  if (directionFilter) {
+    const arrivals = platforms
       .flatMap((platform) => arrivalsByPlatform.get(platform.stopId) ?? [])
       .filter((arrival) =>
-        station.directionFilter!.some(
+        directionFilter.some(
           ([routeId, directionId]) => routeId === arrival.routeId && directionId === arrival.directionId,
         ),
       )
       .sort((a, b) => a.arrivalTime - b.arrivalTime);
-    return <QuerySection heading={`${station.name} to ${station.directionLabel}`} arrivals={arrivals} lines={lines} />;
+    return <QuerySection heading={`${name} to ${directionLabel}`} arrivals={arrivals} lines={lines} />;
   }
 
   return (
     <>
-      {station.platforms.map((platform) => (
+      {platforms.map((platform) => (
         <QuerySection
           key={platform.stopId}
-          heading={`${station.name} ${platform.description}`}
+          heading={`${name} ${platform.description}`}
           arrivals={arrivalsByPlatform.get(platform.stopId) ?? []}
           lines={lines}
         />

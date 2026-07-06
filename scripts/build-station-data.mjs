@@ -1,5 +1,5 @@
-// Resolves the stations listed in src/queries/queries.json against WMATA's GTFS
-// static feed, and writes the small, app-facing src/data/stations.json.
+// Resolves the stations listed in src/queries.json against WMATA's GTFS
+// static feed, and writes the small, app-facing src/stations.json.
 //
 //   pnpm build-stations         regenerate the file locally after editing queries.json
 //   pnpm check-stations         (or --check) verify the committed file still matches
@@ -25,14 +25,14 @@ import { fetchStaticGtfs, requireApiKey } from "./gtfsStatic.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "..");
-const queriesPath = path.join(root, "src/queries/queries.json");
-const outputPath = path.join(root, "src/data/stations.json");
+const queriesPath = path.join(root, "src/queries.json");
+const outputPath = path.join(root, "src/stations.json");
 const isCheck = process.argv.includes("--check");
 
 function buildLines(routes) {
   const lines = {};
   for (const route of routes) {
-    lines[route.route_id] = { name: route.route_long_name, color: route.route_color };
+    lines[route.route_id] = { name: route.route_long_name };
   }
   return lines;
 }

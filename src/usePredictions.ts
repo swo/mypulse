@@ -1,12 +1,14 @@
+import { useEffect, useState } from "react";
 import GtfsRealtimeBindings from "gtfs-realtime-bindings";
-import type { Arrival } from "../types";
+import type { Arrival } from "./types";
 
 const TRIP_UPDATES_URL = "https://api.wmata.com/gtfs/rail-gtfsrt-tripupdates.pb";
+const POLL_INTERVAL_MS = 30_000;
 
 const apiKey = import.meta.env.VITE_WMATA_API_KEY as string;
 
 // Maps platform stop_id -> upcoming arrivals at that platform, across all trips in the feed.
-export async function fetchArrivalsByPlatform(): Promise<Map<string, Arrival[]>> {
+async function fetchArrivalsByPlatform(): Promise<Map<string, Arrival[]>> {
   const res = await fetch(TRIP_UPDATES_URL, { headers: { api_key: apiKey } });
   if (!res.ok) {
     throw new Error(`TripUpdates fetch failed: ${res.status} ${res.statusText}`);
@@ -39,4 +41,35 @@ export async function fetchArrivalsByPlatform(): Promise<Map<string, Arrival[]>>
     arrivals.sort((a, b) => a.arrivalTime - b.arrivalTime);
   }
   return byPlatform;
+}
+
+export function usePredictions() {
+  const [arrivalsByPlatform, setArrivalsByPlatform] = useState<Map<string, Arrival[]>>(new Map());
+  const [error, setError] = useState<Error | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function poll() {
+      try {
+        const data = await fetchArrivalsByPlatform();
+        if (cancelled) return;
+        setArrivalsByPlatform(data);
+        setLastUpdated(new Date());
+        setError(null);
+      } catch (err) {
+        if (!cancelled) setError(err as Error);
+      }
+    }
+
+    poll();
+    const id = setInterval(poll, POLL_INTERVAL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, []);
+
+  return { arrivalsByPlatform, error, lastUpdated };
 }

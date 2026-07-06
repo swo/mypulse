@@ -1,4 +1,4 @@
-export type LineInfo = { name: string; color: string };
+export type LineInfo = { name: string };
 
 export type Platform = { stopId: string; description: string };
 
