@@ -5,7 +5,7 @@ export type Platform = { stopId: string; description: string };
 export type Station = {
   name: string;
   platforms: Platform[];
-  direction?: string | string[];
+  directionLabel?: string;
   directionFilter?: [routeId: string, directionId: number][];
 };
 

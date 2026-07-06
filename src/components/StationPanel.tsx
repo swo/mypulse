@@ -38,7 +38,7 @@ export function StationPanel({
       <h2>{station.name}</h2>
       {station.directionFilter ? (
         <ArrivalRow
-          label={`to ${Array.isArray(station.direction) ? station.direction.join(" / ") : station.direction}`}
+          label={`to ${station.directionLabel}`}
           lines={lines}
           arrivals={station.platforms
             .flatMap((platform) => arrivalsByPlatform.get(platform.stopId) ?? [])

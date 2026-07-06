@@ -50,6 +50,21 @@ function findDirectionPairs(trips, text) {
   return [...pairs.values()];
 }
 
+// `direction` may be a single terminus name or an array (for a shared trunk where
+// different lines end at different names in the same physical direction). Resolves to
+// one combined set of (route, direction_id) pairs and a ready-to-display label, so
+// nothing downstream has to know it could have been an array.
+function resolveDirection(trips, direction) {
+  const terms = Array.isArray(direction) ? direction : [direction];
+  const pairs = new Map();
+  for (const term of terms) {
+    const found = findDirectionPairs(trips, term);
+    if (found.length === 0) return { error: `No direction matching "${term}"` };
+    found.forEach(([routeId, directionId]) => pairs.set(`${routeId}:${directionId}`, [routeId, directionId]));
+  }
+  return { directionFilter: [...pairs.values()], directionLabel: terms.join(" / ") };
+}
+
 function buildStations(queries, stops, trips) {
   const stations = [];
   const unresolved = [];
@@ -63,29 +78,22 @@ function buildStations(queries, stops, trips) {
       continue;
     }
 
-    let directionFilter;
+    const station = { name: query.stationName };
     if (query.direction) {
-      const terms = Array.isArray(query.direction) ? query.direction : [query.direction];
-      const pairs = new Map();
-      let allTermsMatched = true;
-      for (const term of terms) {
-        const found = findDirectionPairs(trips, term);
-        if (found.length === 0) {
-          unresolved.push(`No direction matching "${term}" for "${query.stationName}"`);
-          allTermsMatched = false;
-          continue;
-        }
-        found.forEach(([routeId, directionId]) => pairs.set(`${routeId}:${directionId}`, [routeId, directionId]));
+      const resolved = resolveDirection(trips, query.direction);
+      if (resolved.error) {
+        unresolved.push(`${resolved.error} for "${query.stationName}"`);
+        continue;
       }
-      if (!allTermsMatched) continue;
-      directionFilter = [...pairs.values()];
+      station.directionFilter = resolved.directionFilter;
+      station.directionLabel = resolved.directionLabel;
     }
 
     const parentIds = new Set(parents.map((p) => p.stop_id));
-    const platforms = stops
+    station.platforms = stops
       .filter((s) => s.location_type === "0" && parentIds.has(s.parent_station))
       .map((s) => ({ stopId: s.stop_id, description: s.stop_desc }));
-    stations.push({ name: query.stationName, platforms, direction: query.direction, directionFilter });
+    stations.push(station);
   }
   return { stations, unresolved };
 }
