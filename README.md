@@ -21,11 +21,9 @@ The app polls WMATA's [GTFS-realtime TripUpdates](https://api.wmata.com/gtfs/rai
 
 To change the displayed stations and directions, edit `src/queries/queries.json`. `stationName` must exactly match a station name in WMATA's GTFS static `stops.txt`; run `pnpm list-stations` to print every official name.
 
-`direction` is optional and filters to arrivals heading toward a named terminus, e.g. `"Greenbelt"`. Use an array, e.g. `["Branch Av", "Huntington"]`, when a shared trunk is served by multiple lines that end at different names in the same physical direction — otherwise you'll silently drop one line's trains.
+`direction` is optional and filters to arrivals heading toward a named terminus, e.g. `"Greenbelt"`. Use an array, e.g. `["Branch Av", "Huntington"]`, when a shared trunk is served by multiple lines that end at different names in the same physical direction.
 
-Under the hood, each name resolves (via `trips.txt`) to every `(route, direction_id)` pair that actually ends there, rather than one fixed label per route+direction. That's needed because a few lines (Red, Orange, Silver, Yellow) run short-turn or rush-hour-extension trips that give a single route+direction more than one real terminus — e.g. Yellow Line direction 0 usually ends at Mt Vernon Sq, but some trips continue to Greenbelt. It's also why filtering can't just use platform IDs: a few stations (e.g. Columbia Heights) share one platform for both directions.
-
-Run `pnpm build-stations` after editing to resolve it into `src/data/stations.json`. A bad station name or a direction term that matches no trip anywhere causes a non-zero exit, so typos aren't silent.
+Run `pnpm build-stations` after editing `queries.json` to resolve it into `src/data/stations.json`. A bad station name or a direction term that matches no trip anywhere causes a non-zero exit, so typos aren't silent.
 
 ## Dev tools
 
