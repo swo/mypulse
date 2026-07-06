@@ -18,7 +18,6 @@ export async function fetchStaticGtfs(apiKey) {
   const readEntry = (name) => zip.getEntry(name).getData().toString("utf-8");
   return {
     stops: parseCsv(readEntry("stops.txt")),
-    routes: parseCsv(readEntry("routes.txt")),
     trips: parseCsv(readEntry("trips.txt")),
   };
 }

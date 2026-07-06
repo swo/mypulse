@@ -1,6 +1,6 @@
 name: Check station data
 
-# Verifies src/data/stations.json still matches WMATA's live GTFS static feed.
+# Verifies src/stations.json still matches WMATA's live GTFS static feed.
 # Runs on every merge to main rather than on a schedule: if WMATA renames or
 # removes a station/platform, this fails loudly so it gets noticed and fixed
 # with `pnpm build-stations`, rather than silently auto-committing a change.

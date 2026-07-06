@@ -1,5 +1,5 @@
 // Lists official WMATA station names, for filling in `stationName` in
-// src/queries/queries.json. Run with `pnpm list-stations`.
+// src/queries.json. Run with `pnpm list-stations`.
 
 import { fetchStaticGtfs, requireApiKey } from "./gtfsStatic.mjs";
 

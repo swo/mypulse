@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import stationData from "../data/stations.json";
-import { usePredictions } from "../hooks/usePredictions";
+import stationData from "../stations.json";
+import { usePredictions } from "../usePredictions";
 import { StationPanel } from "./StationPanel";
-import type { StationData } from "../types";
+import type { Station } from "../types";
 
-const typedStationData = stationData as unknown as StationData;
+const stations = stationData as unknown as Station[];
 
 export function Dashboard() {
   const { arrivalsByPlatform, error, lastUpdated } = usePredictions();
@@ -28,13 +28,8 @@ export function Dashboard() {
         )}
         {error && <p className="error">{error.message}</p>}
       </header>
-      {typedStationData.stations.map((station) => (
-        <StationPanel
-          key={station.name}
-          station={station}
-          arrivalsByPlatform={arrivalsByPlatform}
-          lines={typedStationData.lines}
-        />
+      {stations.map((station) => (
+        <StationPanel key={station.name} station={station} arrivalsByPlatform={arrivalsByPlatform} />
       ))}
     </main>
   );
