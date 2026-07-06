@@ -1,18 +1,15 @@
-import type { Arrival, LineInfo, Station } from "../types";
+import type { Arrival, Station } from "../types";
 
 function minutesUntil(epochSeconds: number): number {
   return Math.max(0, Math.round((epochSeconds * 1000 - Date.now()) / 60_000));
 }
 
-function QuerySection({
-  heading,
-  arrivals,
-  lines,
-}: {
-  heading: string;
-  arrivals: Arrival[];
-  lines: Record<string, LineInfo>;
-}) {
+// WMATA route IDs are the line name shouting, e.g. "RED" -> "Red".
+function formatLine(routeId: string): string {
+  return routeId.charAt(0) + routeId.slice(1).toLowerCase();
+}
+
+function QuerySection({ heading, arrivals }: { heading: string; arrivals: Arrival[] }) {
   return (
     <>
       <h2>{heading}</h2>
@@ -20,7 +17,7 @@ function QuerySection({
         {arrivals.length === 0 && <li>no predictions</li>}
         {arrivals.slice(0, 3).map((arrival, i) => (
           <li key={i}>
-            {minutesUntil(arrival.arrivalTime)} min ({lines[arrival.routeId]?.name ?? arrival.routeId})
+            {minutesUntil(arrival.arrivalTime)} min ({formatLine(arrival.routeId)})
           </li>
         ))}
       </ul>
@@ -31,11 +28,9 @@ function QuerySection({
 export function StationPanel({
   station,
   arrivalsByPlatform,
-  lines,
 }: {
   station: Station;
   arrivalsByPlatform: Map<string, Arrival[]>;
-  lines: Record<string, LineInfo>;
 }) {
   const { name, platforms, directionFilter, directionLabel } = station;
 
@@ -48,7 +43,7 @@ export function StationPanel({
         ),
       )
       .sort((a, b) => a.arrivalTime - b.arrivalTime);
-    return <QuerySection heading={`${name} to ${directionLabel}`} arrivals={arrivals} lines={lines} />;
+    return <QuerySection heading={`${name} to ${directionLabel}`} arrivals={arrivals} />;
   }
 
   return (
@@ -58,7 +53,6 @@ export function StationPanel({
           key={platform.stopId}
           heading={`${name} ${platform.description}`}
           arrivals={arrivalsByPlatform.get(platform.stopId) ?? []}
-          lines={lines}
         />
       ))}
     </>
