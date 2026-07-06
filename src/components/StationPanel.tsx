@@ -4,18 +4,10 @@ function minutesUntil(epochSeconds: number): number {
   return Math.max(0, Math.round((epochSeconds * 1000 - Date.now()) / 60_000));
 }
 
-function PlatformRow({
-  description,
-  arrivals,
-  lines,
-}: {
-  description: string;
-  arrivals: Arrival[];
-  lines: Record<string, LineInfo>;
-}) {
+function ArrivalRow({ label, arrivals, lines }: { label: string; arrivals: Arrival[]; lines: Record<string, LineInfo> }) {
   return (
     <div className="platform-row">
-      <div className="platform-description">{description}</div>
+      <div className="platform-description">{label}</div>
       <div className="arrivals">
         {arrivals.length === 0 && <span className="no-data">no predictions</span>}
         {arrivals.slice(0, 3).map((arrival, i) => (
@@ -44,14 +36,29 @@ export function StationPanel({
   return (
     <section className="station-panel">
       <h2>{station.name}</h2>
-      {station.platforms.map((platform) => (
-        <PlatformRow
-          key={platform.stopId}
-          description={platform.description}
-          arrivals={arrivalsByPlatform.get(platform.stopId) ?? []}
+      {station.directionFilter ? (
+        <ArrivalRow
+          label={`to ${station.directionLabel}`}
           lines={lines}
+          arrivals={station.platforms
+            .flatMap((platform) => arrivalsByPlatform.get(platform.stopId) ?? [])
+            .filter((arrival) =>
+              station.directionFilter!.some(
+                ([routeId, directionId]) => routeId === arrival.routeId && directionId === arrival.directionId,
+              ),
+            )
+            .sort((a, b) => a.arrivalTime - b.arrivalTime)}
         />
-      ))}
+      ) : (
+        station.platforms.map((platform) => (
+          <ArrivalRow
+            key={platform.stopId}
+            label={platform.description}
+            lines={lines}
+            arrivals={arrivalsByPlatform.get(platform.stopId) ?? []}
+          />
+        ))
+      )}
     </section>
   );
 }

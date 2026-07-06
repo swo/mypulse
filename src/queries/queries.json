@@ -1,4 +1,4 @@
 [
-  { "id": "metro-center", "label": "Metro Center", "stationName": "Metro Center" },
-  { "id": "gallery-pl", "label": "Gallery Pl-Chinatown", "stationName": "Gallery Place" }
+  { "stationName": "Columbia Heights", "direction": "Greenbelt" },
+  { "stationName": "Hyattsville Crossing", "direction": ["Branch Av", "Huntington"] }
 ]

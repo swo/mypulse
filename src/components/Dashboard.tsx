@@ -1,34 +1,41 @@
-import queries from "../queries/queries.json";
+import { useEffect, useState } from "react";
 import stationData from "../data/stations.json";
 import { usePredictions } from "../hooks/usePredictions";
 import { StationPanel } from "./StationPanel";
-import type { Query, StationData } from "../types";
+import type { StationData } from "../types";
 
-const typedQueries = queries as Query[];
-const typedStationData = stationData as StationData;
+const typedStationData = stationData as unknown as StationData;
 
 export function Dashboard() {
   const { arrivalsByPlatform, error, lastUpdated } = usePredictions();
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const secondsAgo = lastUpdated ? Math.round((now.getTime() - lastUpdated.getTime()) / 1000) : null;
 
   return (
     <main>
       <header>
         <h1>mypulse</h1>
-        {lastUpdated && <p className="updated-at">updated {lastUpdated.toLocaleTimeString()}</p>}
+        {lastUpdated && secondsAgo !== null && (
+          <p className="updated-at">
+            Last updated {secondsAgo} second{secondsAgo === 1 ? "" : "s"} ago ({lastUpdated.toLocaleTimeString()})
+          </p>
+        )}
         {error && <p className="error">{error.message}</p>}
       </header>
-      {typedQueries.map((query) => {
-        const station = typedStationData.stations[query.id];
-        if (!station) return null;
-        return (
-          <StationPanel
-            key={query.id}
-            station={station}
-            arrivalsByPlatform={arrivalsByPlatform}
-            lines={typedStationData.lines}
-          />
-        );
-      })}
+      {typedStationData.stations.map((station) => (
+        <StationPanel
+          key={station.name}
+          station={station}
+          arrivalsByPlatform={arrivalsByPlatform}
+          lines={typedStationData.lines}
+        />
+      ))}
     </main>
   );
 }

@@ -18,8 +18,8 @@ export async function fetchArrivalsByPlatform(): Promise<Map<string, Arrival[]>>
   const byPlatform = new Map<string, Arrival[]>();
   for (const entity of feed.entity) {
     const trip = entity.tripUpdate;
-    if (!trip?.trip.routeId) continue;
-    const routeId = trip.trip.routeId;
+    if (!trip?.trip.routeId || trip.trip.directionId == null) continue;
+    const { routeId, directionId } = trip.trip;
 
     // A trip's stop_time_update list covers its whole route, including stops
     // already visited — skip anything that isn't still in the future.
@@ -30,7 +30,7 @@ export async function fetchArrivalsByPlatform(): Promise<Map<string, Arrival[]>>
       if (arrivalSeconds < nowSeconds) continue;
 
       const arrivals = byPlatform.get(stopTimeUpdate.stopId) ?? [];
-      arrivals.push({ routeId, arrivalTime: arrivalSeconds });
+      arrivals.push({ routeId, directionId, arrivalTime: arrivalSeconds });
       byPlatform.set(stopTimeUpdate.stopId, arrivals);
     }
   }

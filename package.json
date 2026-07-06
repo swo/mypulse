@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "build-stations": "dotenv -e .env.local -- node scripts/build-station-data.mjs",
     "check-stations": "dotenv -e .env.local -- node scripts/build-station-data.mjs --check",
-    "list-stations": "dotenv -e .env.local -- node scripts/list-stations.mjs"
+    "list-stations": "dotenv -e .env.local -- node scripts/list-stations.mjs",
+    "verify": "node scripts/verify.mjs"
   },
   "dependencies": {
     "gtfs-realtime-bindings": "^2.1.0",
@@ -24,6 +25,7 @@
     "adm-zip": "^0.5.16",
     "dotenv-cli": "^7.4.4",
     "papaparse": "^5.4.1",
+    "playwright": "^1.61.1",
     "typescript": "^6.0.3",
     "vite": "^8.1.3"
   }
