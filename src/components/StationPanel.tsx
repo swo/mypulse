@@ -4,23 +4,27 @@ function minutesUntil(epochSeconds: number): number {
   return Math.max(0, Math.round((epochSeconds * 1000 - Date.now()) / 60_000));
 }
 
-function ArrivalRow({ label, arrivals, lines }: { label: string; arrivals: Arrival[]; lines: Record<string, LineInfo> }) {
+function QuerySection({
+  heading,
+  arrivals,
+  lines,
+}: {
+  heading: string;
+  arrivals: Arrival[];
+  lines: Record<string, LineInfo>;
+}) {
   return (
-    <div className="platform-row">
-      <div className="platform-description">{label}</div>
-      <div className="arrivals">
-        {arrivals.length === 0 && <span className="no-data">no predictions</span>}
+    <>
+      <h2>{heading}</h2>
+      <ul>
+        {arrivals.length === 0 && <li>no predictions</li>}
         {arrivals.slice(0, 3).map((arrival, i) => (
-          <span
-            key={i}
-            className="arrival-chip"
-            style={{ backgroundColor: `#${lines[arrival.routeId]?.color ?? "999"}` }}
-          >
-            {minutesUntil(arrival.arrivalTime)} min
-          </span>
+          <li key={i}>
+            {minutesUntil(arrival.arrivalTime)} min ({lines[arrival.routeId]?.name ?? arrival.routeId})
+          </li>
         ))}
-      </div>
-    </div>
+      </ul>
+    </>
   );
 }
 
@@ -33,32 +37,28 @@ export function StationPanel({
   arrivalsByPlatform: Map<string, Arrival[]>;
   lines: Record<string, LineInfo>;
 }) {
+  if (station.directionFilter) {
+    const arrivals = station.platforms
+      .flatMap((platform) => arrivalsByPlatform.get(platform.stopId) ?? [])
+      .filter((arrival) =>
+        station.directionFilter!.some(
+          ([routeId, directionId]) => routeId === arrival.routeId && directionId === arrival.directionId,
+        ),
+      )
+      .sort((a, b) => a.arrivalTime - b.arrivalTime);
+    return <QuerySection heading={`${station.name} to ${station.directionLabel}`} arrivals={arrivals} lines={lines} />;
+  }
+
   return (
-    <section className="station-panel">
-      <h2>{station.name}</h2>
-      {station.directionFilter ? (
-        <ArrivalRow
-          label={`to ${station.directionLabel}`}
+    <>
+      {station.platforms.map((platform) => (
+        <QuerySection
+          key={platform.stopId}
+          heading={`${station.name} ${platform.description}`}
+          arrivals={arrivalsByPlatform.get(platform.stopId) ?? []}
           lines={lines}
-          arrivals={station.platforms
-            .flatMap((platform) => arrivalsByPlatform.get(platform.stopId) ?? [])
-            .filter((arrival) =>
-              station.directionFilter!.some(
-                ([routeId, directionId]) => routeId === arrival.routeId && directionId === arrival.directionId,
-              ),
-            )
-            .sort((a, b) => a.arrivalTime - b.arrivalTime)}
         />
-      ) : (
-        station.platforms.map((platform) => (
-          <ArrivalRow
-            key={platform.stopId}
-            label={platform.description}
-            lines={lines}
-            arrivals={arrivalsByPlatform.get(platform.stopId) ?? []}
-          />
-        ))
-      )}
-    </section>
+      ))}
+    </>
   );
 }
