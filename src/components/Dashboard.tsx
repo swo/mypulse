@@ -29,7 +29,12 @@ export function Dashboard() {
         {error && <p className="error">{error.message}</p>}
       </header>
       {stations.map((station) => (
-        <StationPanel key={station.name} station={station} arrivalsByPlatform={arrivalsByPlatform} />
+        <StationPanel
+          key={station.name}
+          station={station}
+          arrivalsByPlatform={arrivalsByPlatform}
+          hasLoadedOnce={lastUpdated !== null}
+        />
       ))}
     </main>
   );
